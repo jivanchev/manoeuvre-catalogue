@@ -1,1 +1,1 @@
-# sub-manoeuvre-catalogue
+# manoeuvre--catalogue
