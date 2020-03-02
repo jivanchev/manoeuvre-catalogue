@@ -1,0 +1,374 @@
+{
+    "PLATOON_LANE_CHANE_1":{
+        "Category": "manoeuvre",
+        "Name": "M_PLATOON_LANE_CHANE",
+        "Description": "Adds a vehicle in the tail of the platoon",
+        "Participants": {
+            "vehicle_A": "platoon_leader"
+        },
+        "Results": [ "SUCCESS", "ABORT1"],
+        "EntryPoints": {    
+            "vehicle_A": {
+                "super_state":"PL",
+                "entry_substate":"root:States:LOOP_1",
+                "is_pme": true
+            }
+        },
+        "States": { 
+            "LOOP_1":{
+                "Step": "STEP01",
+                "Category" : "forloop",
+                "Name" : "SIM_FORLOOP",
+                "Results": [ "SUCCESS","ABORT1"],
+                "Next": {
+                    "SUCCESS": "current:Results:SUCCESS",
+                    "ABORT1": "current:Results:ABORT1"
+                },
+                "EntryPoints": {    
+                    "vehicle_A": {
+                        "super_state":"PL",
+                        "entry_substate":"root:Leader_States:MTP_1",
+                        "is_pme": true
+                    },
+                    "vehicle_loop": {
+                        "super_state":"PF",
+                        "entry_substate":"root:For_All_States:MOVETOPOS_1",
+                        "is_pme": true
+                    }
+                },
+                "Leader_States" : {
+                    "MTP_1": {
+                        "Category": "primitive",
+                        "Name" : "P_MOVETOPOSITION",
+                        "Resource": "function:moveToPos",
+                        "Messages": {
+                            "ABORT_MSG" : "ABORT2"
+                        },
+                        "Parameters": { 
+                            "target_vehicle": {
+                                "type" :"INT",
+                                "value":"vehicle_A"
+                            },
+                            "position_offset": {
+                                "type" :"SPOSITIONOFFSET",
+                                "value":"OFF_NONE"
+                            },
+                            "distance_offset": {
+                                "type" :"DOUBLE",
+                                "value":"OFFSET_NONE"
+                            }
+                        },
+                        "Results": [ "SUCCESS", "ABORT1"],
+                        "Next": {
+                            "SUCCESS": "current:Results:SUCCESS", 
+                            "ABORT1": "current:States:SND_2"
+                        }
+                    },
+                    "SND_2": { 
+                        "Category": "primitive",
+                        "Name" : "P_SENDMESSAGE_MULTICAST",
+                        "Resource": "function:sendMessage",
+                        "Parameters": {
+                            "message": {
+                                "type" : "SBEACONCOMMAND",
+                                "value":"ABORT_MSG"
+                            }
+                        },
+                        "Results": [ "SUCCESS"],
+                        "Next": {
+                            "SUCCESS": "current:Results:ABORT1"
+                        }
+                    }
+                },
+                "For_All_States" : {
+                    "MOVETOPOS_1": {
+                        "Category": "submanoeuvre",
+                        "Name" : "SM_MOVETOPOSITION",
+                        "Step": "STEP01",
+                        "Results": [ "SUCCESS", "ABORT1"],
+                        "Next": {
+                            "SUCCESS": "root:Results:SUCCESS",
+                            "ABORT1": "root:For_All_States:DETACH_1"
+                        },
+                        "EntryPoints": {    
+                            "vehicle_A": {
+                                "super_state":"VS_PLATOON_LEADER",
+                                "entry_substate":"root:States:SND_1",
+                                "is_pme": true
+                            },
+                            "vehicle_loop": {
+                                "superstate":"VS_FREE_AGENT_WAITING",
+                                "entry_substate":"root:States:MTP_1",
+                                "is_pme": false
+                            }
+                        },
+                        "States_pme": {
+                            "SND_1": { 
+                                "Category": "primitive",
+                                "Name" : "P_SENDMESSAGE",
+                                "Resource": "function:sendMessage",
+                                "Parameters": {
+                                    "receiver": {
+                                        "type" : "INT",
+                                        "value": "vehicle_loop"
+                                    },
+                                    "timeout":{
+                                        "type" : "LONG",
+                                        "value":"TO_MOVE_TO_POS"   
+                                    },
+                                    "message":{
+                                        "type" : "SBEACONCOMMAND",
+                                        "value":"ORD_MOVETOPOS"   
+                                    } 
+                                },
+                                "SendInstructions" : true,
+                                "Results": [ "SUCCESS"],
+                                "Next": {
+                                    "SUCCESS": "current:States_pme:WAIT_1"
+                                }
+                            },
+                            "WAIT_1": { 
+                                "Category": "primitive",
+                                "Name": "P_WAIT",
+                                "Resource": "function:wait",
+                                "Messages": {
+                                    "DN_MOVETOPOS" : "SUCCESS",
+                                    "ABORT_MSG" : "ABORT1"
+                                },
+                                "Results": [ "SUCCESS", "ABORT1","TIMEOUT"],
+                                "Parameters": {
+                                    "timeout": {
+                                        "type" : "LONG",
+                                        "value" : "TO_PLATOON_LANECHANGE"
+                                    }
+                                },
+                                "Next": {
+                                    "SUCCESS": "current:Results:SUCCESS", 
+                                    "TIMEOUT": "current:States_pme:SND_3",
+                                    "ABORT1": "current:Results:ABORT1"
+                                }
+                            },
+                            "SND_3": { 
+                                "Category": "primitive",
+                                "Name" : "P_SENDMESSAGE",
+                                "Resource": "function:sendMessage",
+                                "Parameters": {
+                                    "message": {
+                                        "type" : "SBEACONCOMMAND",
+                                        "value":"ABORT_MSG"
+                                    },
+                                    "receiver": {
+                                        "type": "INT",
+                                        "value":"vehicle_loop"
+                                    }
+                                },
+                                "Results": [ "SUCCESS"],
+                                "Next": {
+                                    "SUCCESS": "current:Results:ABORT1"
+                                }
+                            }
+                        },
+                        "States_rsm": {
+                             "MTP_1": {
+                                "Category": "primitive",
+                                "Name" : "P_MOVETOPOSITION",
+                                "Resource": "function:moveToPos",
+                                "Messages": {
+                                    "ABORT_MSG" : "ABORT2"
+                                },
+                                "Parameters": { 
+                                    "target_vehicle": {
+                                        "type" :"INT",
+                                        "value":"vehicle_loop"
+                                    },
+                                    "position_offset": {
+                                        "type" :"SPOSITIONOFFSET",
+                                        "value":"OFF_NONE"
+                                    },
+                                    "distance_offset": {
+                                        "type" :"DOUBLE",
+                                        "value":"OFFSET_NONE"
+                                    }
+                                },
+                                "Results": [ "SUCCESS", "ABORT1","ABORT2"],
+                                "Next": {
+                                    "SUCCESS": "current:States_rsm:SND_2", 
+                                    "ABORT1": "current:States_rsm:SND_4",
+                                    "ABORT2": "current:Results:ABORT1" 
+                                }
+                            },
+                            
+                            "SND_2": { 
+                                "Category": "primitive",
+                                "Name" : "P_SENDMESSAGE",
+                                "Resource": "function:sendMessage",
+                                "Parameters": {
+                                    "message": {
+                                        "type" : "SBEACONCOMMAND",
+                                        "value":"DN_MOVETOPOS"
+                                    },
+                                    "receiver": {
+                                        "type": "INT",
+                                        "value":"vehicle_A"
+                                    }
+                                },
+                                "Results": [ "SUCCESS"],
+                                "Next": {
+                                    "SUCCESS": "current:Results:SUCCESS"
+                                }
+                            },
+                            "SND_4": { 
+                                "Category": "primitive",
+                                "Name" : "P_SENDMESSAGE",
+                                "Resource": "function:sendMessage",
+                                "Parameters": {
+                                    "message": {
+                                        "type" : "SBEACONCOMMAND",
+                                        "value":"ABORT_MSG"
+                                    },
+                                    "receiver": {
+                                        "type": "INT",
+                                        "value":"vehicle_A"
+                                    }
+                                },
+                                "Results": [ "SUCCESS"],
+                                "Next": {
+                                    "SUCCESS": "current:Results:ABORT1"
+                                }
+                            }
+                        }
+                    },
+                    "DETACH_1": { 
+                        "Category": "submanoeuvre",
+                        "Name" : "SM_DETACH",
+                        "Step": "STEP02",
+                        "Results" : ["SUCCESS","ABORT1"],
+                        "Next": {
+                            "SUCCESS": "root:Results:ABORT1",
+                            "ABORT1": "root:Results:ABORT1"                    
+                        },
+                        "EntryPoints": {    
+                            "vehicle_A": {
+                                "super_state":"VS_PLATOON_LEADER",
+                                "entry_substate":"current:States:SND_1",
+                                "is_pme": true
+                            },
+                            "vehicle_loop": {
+                                "superstate":"VS_FREE_AGENT_WAITING",
+                                "entry_substate":"current:States:SND_2",
+                                "is_pme": false
+                            }
+                        },
+                        "States_pme": {
+                            "SND_1": { 
+                                "Category": "primitive",
+                                "Name" : "P_SENDMESSAGE",
+                                "Resource": "function:sendMessage",
+                                "Parameters": {
+                                    "message": {
+                                        "type" : "SBEACONCOMMAND",
+                                        "value":"ORD_DETACH"
+                                    },
+                                    "receiver": {
+                                        "type": "INT",
+                                        "value":"vehicle_loop"
+                                    }
+                                },
+                                "SendInstructions" : true,
+                                "Results": [ "SUCCESS"],
+                                "Next": {
+                                    "SUCCESS": "current:States:WAIT_1"
+                                }
+                            },
+                            "WAIT_1": { 
+                                "Category": "primitive",
+                                "Name" : "P_WAIT",
+                                "Resource": "function:Wait",
+                                "Messages": {
+                                    "DN_DETACH" : "SUCCESS",
+                                    "ABORT_MSG" : "ABORT1"
+                                },
+                                "Results": [ "SUCCESS", "ABORT1","TIMEOUT"],
+                                "Parameters": {
+                                    "timeout": {
+                                        "type" : "LONG",
+                                        "value":"TO_DETACH"
+                                    }
+                                },
+                                "Next": {
+                                    "SUCCESS": "current:States:RTP_1", 
+                                    "TIMEOUT": "current:States:SND_3",
+                                    "ABORT1": "current:Results:ABORT1"
+                                }
+                            },
+                            "RTP_1": { 
+                                "Category": "primitive",
+                                "Name" : "P_REMOVE_TO_PLATOON",
+                                "Resource": "function:updatePlatoon",
+                                "Results": [ "SUCCESS"],
+                                "Parameters": {
+                                    "agent_id": {
+                                        "type" : "INT",
+                                        "value":"vehicle_loop"
+                                    }
+                                },
+                                "Next": {
+                                    "SUCCESS": "current:Results:SUCCESS" 
+                                }
+                            },
+                            "SND_3": { 
+                                "Category": "Primitive",
+                                "Name" : "P_SENDMESSAGE",
+                                "Resource": "function:sendMessage",
+                                "Parameters": {
+                                    "message": {
+                                        "type" : "SBEACONCOMMAND",
+                                        "value":"ABORT_MSG"
+                                    },
+                                    "receiver": {
+                                        "type": "INT",
+                                        "value":"vehicle_loop"
+                                    }
+                                },
+                                "Results": [ "SUCCESS"],
+                                "Next": {
+                                    "SUCCESS": "current:States:RTP_1"
+                                }
+                            }
+                        },
+                        "States_rsm": {
+                            "SND_2": { 
+                                "Category": "primitive",
+                                "Name" : "P_SENDMESSAGE",
+                                "Resource": "function:sendMessage",
+                                "Parameters": {
+                                    "message": {
+                                        "type" : "SBEACONCOMMAND",
+                                        "value":"DN_DETACH"
+                                    },
+                                    "receiver": {
+                                        "type": "INT",
+                                        "value":"vehicle_A"
+                                    }
+                                },
+                                "Results": [ "SUCCESS"],
+                                "Next": {
+                                    "SUCCESS": "current:States:BFV_1"
+                                }
+                            },
+                            "BFV_1": { 
+                                "Category": "primitive", 
+                                "Name" : "P_BECOME_FREE_AGENT",
+                                "Resource": "function:becomeFreeAgent",
+                                "Results": [ "SUCCESS"],
+                                "Next": {
+                                    "SUCCESS": "current:Results:SUCCESS" 
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }    
+    }
+}

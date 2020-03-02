@@ -1,0 +1,34 @@
+{
+    "VS_TEMP_LEADER":{
+        "Category": "vehicle",
+        "Name": "VS_TEMP_LEADER",
+        "Step": "NOSTEP",
+        "Description": "describe how a wizard respond to message",
+        "Messages":{
+            "ABORT_MSG" : "root:Triggers:BecomeFreeVehicle",
+            "ORD_DISSOLVE" : "root:Triggers:BecomeFreeVehicle",
+            "ORD_GAPCLOSE" : "read_instruction",
+            "ORD_DETACH" : "read_instruction",
+            "ORD_LCBFA" : "read_instruction"
+        },
+        "Triggers": {
+            "BecomeFreeVehicle":{
+                "EntryPoint": "BFV_1",
+                "Participants": {
+                    "vehicle_A": "this"
+                },
+                "States":{
+                    "BPL_1": { 
+                        "Category": "primitive", 
+                        "Name" : "P_BECOME_FREE_AGENT",
+                        "Resource": "function:BecomeFreeVehicle",
+                        "Results": [ "SUCCESS"],
+                        "Next": {
+                            "SUCCESS": "current:Results:SUCCESS" 
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

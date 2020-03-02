@@ -1,0 +1,84 @@
+{
+    "SM_NEGOTIATE":{
+        "Category": "submanoeuvre",
+        "Name": "SM_NEGOTIATE",
+        "Step": "NOSTEP",
+        "Description": "the joining vehicle",
+        "Participants": {
+            "vehicle_B": "negociating_vehicle",
+            "vehicle_A": "target_vehicle"
+        },
+        "Results": [ "SUCCESS", "ABORT1", "ABORT2" ],
+        "Next": {
+            "SUCCESS": "root:Results:SUCCESS",
+            "ABORT1": "root:Results:ABORT1",
+            "ABORT2": "root:Results:ABORT2"
+        },
+        "EntryPoints": {    
+            "vehicle_B": {
+                "superstate":"FV",
+                "entry_substate":"root:States:SND_1",
+                "is_pme": false
+            }
+        },
+        "States_rsm": {
+            "SND_1": { 
+                "Category": "primitive",
+                "Name" : "P_SENDMESSAGE",
+                "Resource": "function:sendMessage",
+                "Parameters": {
+                    "receiver": {
+                        "type" : "INT",
+                        "value": "vehicle_A"
+                    },
+                    "message":{
+                        "type" : "SBEACONCOMMAND",
+                        "value":"REQ_JOIN"   
+                    },
+                    "timeout":{
+                        "type" : "LONG",
+                        "value":"TO_NEGOTIATE"   
+                    } 
+                },
+                "Results": [ "SUCCESS"],
+                "Next": {
+                    "SUCCESS": "current:States_rsm:WAIT_1"
+                }
+            },
+            "WAIT_1": { 
+                "Category": "primitive",
+                "Name": "P_WAIT",
+                "Resource": "function:wait",
+                "Messages": {
+                    "ACK" : "SUCCESS",
+                    "NACK" : "ABORT1"
+                },
+                "Results": [ "SUCCESS", "ABORT1","TIMEOUT"],
+                "Parameters": {
+                    "timeout": {
+                        "type" : "LONG",
+                        "value" : "TO_NEGOTIATE"
+                    },
+                    "responder": {
+                        "type" : "INT",
+                        "value": "vehicle_A"
+                    }
+                },
+                "Next": {
+                    "SUCCESS": "current:States_rsm:BFVW_1", 
+                    "TIMEOUT": "current:Results:ABORT2",
+                    "ABORT1": "current:Results:ABORT1"
+                }
+            },
+            "BFVW_1": { 
+                "Category": "primitive", 
+                "Name" : "P_BECOME_FREE_AGENT_WAITING",
+                "Resource": "function:becomeFreeAgentWaiting",
+                "Results": [ "SUCCESS"],
+                "Next": {
+                    "SUCCESS": "current:Results:SUCCESS" 
+                }
+            }
+        }
+    }
+}

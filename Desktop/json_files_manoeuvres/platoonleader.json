@@ -1,0 +1,42 @@
+{
+    "VS_PLATOON_LEADER":{
+        "Category": "vehicle",
+        "Name": "VS_PLATOON_LEADER",
+        "Step": "NOSTEP",
+        "Description": "describe how a platoon leader respond to message",
+        "Messages":{
+            "REQ_JOIN" : "root:Triggers:JOIN_TRIGGER"
+        },
+        "Triggers": {
+            "JOIN_TRIGGER":{
+                "Trigger" : "join",
+                "EntryPoint": "SND_1",
+                "Participants": {
+                    "vehicle_A": "this",
+                    "vehicle_B": "sender"
+                },
+                "States":{
+                    "SND_1": { 
+                        "Category": "primitive",
+                        "Name" : "P_SENDMESSAGE",
+                        "Resource": "function:sendMessage",
+                        "Parameters": {
+                            "receiver": {
+                                "type" : "INT",
+                                "value": "vehicle_B"
+                            },
+                            "message":{
+                                "type" : "SBEACONCOMMAND",
+                                "value":"ACK"   
+                            }
+                        },
+                        "Results": [ "SUCCESS"],
+                        "Next": {
+                            "SUCCESS": "current:Results:SUCCESS" 
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

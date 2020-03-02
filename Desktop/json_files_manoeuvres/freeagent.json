@@ -1,0 +1,52 @@
+{
+    "VS_FREE_AGENT":{
+        "Category": "vehicle",
+        "Name": "VS_FREE_AGENT",
+        "Step": "NOSTEP",
+        "Description": "describe how a free vehicle respond to message",
+        "Messages":{
+            "REQ_JOIN" : "root:Triggers:Join"
+        },
+        "Triggers": {
+            "Join":{
+                "Trigger" : "join",
+                "Category": "trigger",
+                "EntryPoint": "SND_1",
+                "Participants": {
+                    "vehicle_A": "this",
+                    "vehicle_B": "sender"
+                },
+                "States":{
+                    "SND_1": { 
+                            "Category": "primitive",
+                            "Name" : "P_SENDMESSAGE",
+                            "Resource": "function:sendMessage",
+                            "Parameters": {
+                                "receiver": {
+                                    "type" : "INT",
+                                    "value": "vehicle_B"
+                                },
+                                "message":{
+                                    "type" : "SBEACONCOMMAND",
+                                    "value":"ACK"   
+                                }
+                            },
+                            "Results": [ "SUCCESS"],
+                            "Next": {
+                                "SUCCESS": "current:States:BPL_1"
+                            }
+                        },
+                    "BPL_1": { 
+                        "Category": "primitive", 
+                        "Name" : "P_BECOME_PLATOON_LEADER",
+                        "Resource": "function:becomePlatoonLeader",
+                        "Results": [ "SUCCESS"],
+                        "Next": {
+                            "SUCCESS": "current:Results:SUCCESS" 
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,33 @@
+{
+    "VS_FREE_AGENT_WAITING":{
+        "Category": "vehicle",
+        "Name": "VS_FREE_AGENT_WAITING",
+        "Step": "NOSTEP",
+        "Description": "describe how a free vehicle waiting respond to message",
+        "Messages":{
+            "ABORT_MSG" : "root:Triggers:BecomeFreeVehicle",
+            "ORD_MOVETOPOS" : "read_instruction",
+            "ORD_ATTACH" : "read_instruction",
+            "ORD_LCBFO" : "read_instruction"
+        },
+        "Triggers": {
+            "BecomeFreeVehicle":{
+                "EntryPoint": "BFV_1",
+                "Participants": {
+                    "vehicle_A": "this"
+                },
+                "States":{
+                    "BFV_1": { 
+                        "Category": "primitive", 
+                        "Name" : "P_BECOME_FREE_AGENT",
+                        "Resource": "function:becomeFreeAgent",
+                        "Results": [ "SUCCESS"],
+                        "Next": {
+                            "SUCCESS": "current:Results:ABORT1" 
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
